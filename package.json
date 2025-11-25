@@ -1,5 +1,5 @@
 {
-    "name": "sakai-ng",
+    "name": "money-tracker",
     "version": "20.0.0",
     "scripts": {
         "ng": "ng",
@@ -12,6 +12,7 @@
     "private": true,
     "dependencies": {
         "@angular/animations": "^20",
+        "@angular/cdk": "^21.0.0",
         "@angular/common": "^20",
         "@angular/compiler": "^20",
         "@angular/core": "^20",

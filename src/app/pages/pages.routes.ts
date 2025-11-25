@@ -1,11 +1,9 @@
 import { Routes } from '@angular/router';
-import { Documentation } from './documentation/documentation';
-import { Crud } from './crud/crud';
-import { Empty } from './empty/empty';
+import { DataEntryComponent } from './data-entry-component/data-entry-component';
 
 export default [
-    { path: 'documentation', component: Documentation },
-    { path: 'crud', component: Crud },
-    { path: 'empty', component: Empty },
+    { path: 'data-entry', component: DataEntryComponent },
+    // { path: 'crud', component: Crud },
+    // { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

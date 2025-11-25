@@ -1,0 +1,126 @@
+<p-toast />
+<form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+    <div class="flex flex-col md:flex-row min-h-screen items-center justify-center bg-surface-50 dark:bg-surface-950">
+        <div class="w-full max-w-md flex flex-col items-center justify-center gap-4 py-8 px-6 bg-surface-0 dark:bg-surface-900 rounded-lg shadow-lg relative">
+            <!-- Loading Overlay -->
+            @if (isLoading) {
+                <div class="absolute inset-0 bg-surface-0 dark:bg-surface-900 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-50 rounded-lg">
+                    <div class="flex flex-col items-center gap-3">
+                        <p-progressSpinner [style]="{'width': '50px', 'height': '50px'}" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+                        <p class="text-surface-900 dark:text-surface-0 font-medium">Đang xử lý...</p>
+                    </div>
+                </div>
+            }
+            <div class="flex flex-col gap-2 w-full mb-6">
+                <h2 class="text-3xl font-bold text-center text-surface-900 dark:text-surface-0">Đăng Ký</h2>
+            </div>
+
+            <!-- Username -->
+            <div class="flex flex-col gap-2 w-full">
+                <label for="username" class="text-surface-900 dark:text-surface-0 font-medium">Tên đăng nhập</label>
+                <input pInputText id="username" type="text" formControlName="username" placeholder="Nhập tên đăng nhập" class="w-full" [class.ng-invalid]="f['username'].invalid && f['username'].touched" [disabled]="isLoading" />
+                @if (f['username'].invalid && f['username'].touched) {
+                <small class="text-red-500"> @if (f['username'].hasError('required')) { Tên đăng nhập là bắt buộc } @else if (f['username'].hasError('minlength')) { Tên đăng nhập phải có ít nhất 3 ký tự } </small>
+                }
+            </div>
+
+            <!-- Email -->
+            <div class="flex flex-col gap-2 w-full">
+                <label for="email" class="text-surface-900 dark:text-surface-0 font-medium">Email</label>
+                <input pInputText id="email" type="email" formControlName="email" placeholder="Nhập email" class="w-full" [class.ng-invalid]="f['email'].invalid && f['email'].touched" [disabled]="isLoading" />
+                @if (f['email'].invalid && f['email'].touched) {
+                <small class="text-red-500"> @if (f['email'].hasError('required')) { Email là bắt buộc } @else if (f['email'].hasError('email')) { Email không hợp lệ } </small>
+                }
+            </div>
+
+            <!-- Password -->
+            <div class="flex flex-col gap-2 w-full">
+                <label for="password" class="text-surface-900 dark:text-surface-0 font-medium">Mật khẩu</label>
+                <p-password
+                    id="password"
+                    formControlName="password"
+                    placeholder="Nhập mật khẩu"
+                    [toggleMask]="true"
+                    [feedback]="false"
+                    styleClass="w-full"
+                    [style]="{'width': '100%'}"
+                    [class.ng-invalid]="f['password'].invalid && f['password'].touched"
+                    [disabled]="isLoading"
+                ></p-password>
+                @if (f['password'].invalid && f['password'].touched) {
+                <small class="text-red-500"> @if (f['password'].hasError('required')) { Mật khẩu là bắt buộc } @else if (f['password'].hasError('minlength')) { Mật khẩu phải có ít nhất 6 ký tự } </small>
+                }
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="flex flex-col gap-2 w-full">
+                <label for="confirmPassword" class="text-surface-900 dark:text-surface-0 font-medium">Xác nhận mật khẩu</label>
+                <p-password
+                    id="confirmPassword"
+                    formControlName="confirmPassword"
+                    placeholder="Nhập lại mật khẩu"
+                    [toggleMask]="true"
+                    [feedback]="false"
+                    styleClass="w-full"
+                    [style]="{'width': '100%'}"
+                    [class.ng-invalid]="f['confirmPassword'].invalid && f['confirmPassword'].touched"
+                    [disabled]="isLoading"
+                ></p-password>
+                @if (f['confirmPassword'].invalid && f['confirmPassword'].touched) {
+                <small class="text-red-500"> @if (f['confirmPassword'].hasError('required')) { Xác nhận mật khẩu là bắt buộc } @else if (f['confirmPassword'].hasError('passwordMismatch')) { Mật khẩu xác nhận không khớp } </small>
+                }
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="flex flex-col gap-2 w-full">
+                <label for="dob" class="text-surface-900 dark:text-surface-0 font-medium">Ngày sinh</label>
+                <p-datepicker id="dob" formControlName="dob" [showIcon]="true" [showButtonBar]="true" [maxDate]="maxDate" dateFormat="dd/mm/yy" placeholder="Chọn ngày sinh" styleClass="w-full" [style]="{'width': '100%'}" [disabled]="isLoading"></p-datepicker>
+            </div>
+
+            <!-- Nationality -->
+            <div class="flex flex-col gap-2 w-full">
+                <label for="nationality" class="text-surface-900 dark:text-surface-0 font-medium">Quốc tịch</label>
+                <p-select
+                    [options]="countries"
+                    formControlName="nationality"
+                    optionLabel="cca2"
+                    [filter]="true"
+                    filterBy="name.common"
+                    [showClear]="true"
+                    placeholder="Chọn quốc tịch"
+                    class="w-full"
+                    [class.ng-invalid]="f['nationality'].invalid && f['nationality'].touched"
+                    [disabled]="isLoading"
+                >
+                    <ng-template #selectedItem let-selectedOption>
+                        @if (selectedOption) {
+                        <div class="flex items-center gap-2">
+                            <span [class]="'flag flag-' + (selectedOption.cca2?.toLowerCase() || '')" style="width: 18px; height: 12px; display: inline-block"></span>
+                            <div>{{ selectedOption.name.common }}</div>
+                        </div>
+                        }
+                    </ng-template>
+                    <ng-template let-country #item>
+                        <div class="flex items-center gap-2">
+                            <span [class]="'flag flag-' + (country.cca2?.toLowerCase() || '')" style="width: 18px; height: 12px; display: inline-block"></span>
+                            <div>{{ country.name.common }}</div>
+                        </div>
+                    </ng-template>
+                </p-select>
+                @if (f['nationality'].invalid && f['nationality'].touched) {
+                <small class="text-red-500">Vui lòng chọn quốc tịch</small>
+                }
+            </div>
+
+            <div class="flex w-full mt-2">
+                <p-button label="Đăng Ký" icon="pi pi-user-plus" class="w-full" styleClass="w-full" [loading]="isLoading" type="submit" [disabled]="registerForm.invalid || isLoading" />
+            </div>
+            <div class="flex flex-col gap-2 w-full mt-6">
+                <p class="text-center text-sm text-surface-600 dark:text-surface-400">
+                    Đã có tài khoản?
+                    <a routerLink="/login" class="text-primary cursor-pointer hover:underline font-medium">Đăng nhập ngay</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</form>

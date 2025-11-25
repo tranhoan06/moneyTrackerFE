@@ -1,0 +1,26 @@
+:host {
+    display: block;
+    width: 100%;
+    min-height: 100vh;
+}
+
+::ng-deep {
+    // Style cho password input
+    p-password {
+        width: 100%;
+        
+        .p-inputtext {
+            width: 100%;
+        }
+    }
+    
+    // Style cho button
+    p-button {
+        width: 100%;
+        
+        button {
+            width: 100%;
+        }
+    }
+}
+
