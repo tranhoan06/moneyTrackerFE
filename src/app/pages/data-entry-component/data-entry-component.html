@@ -1,1 +1,15 @@
-<p>data-entry-component works!</p>
+<form [formGroup]="dataForm">
+    <div class="card mb-0">
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-surface-900 dark:text-surface-0 font-medium">Ngày:</label>
+                <p-datepicker formControlName="date" [style]="{'width': '250px'}"></p-datepicker>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-surface-900 dark:text-surface-0 font-medium">Ghi chú:</label>
+                <textarea rows="5" cols="30" pTextarea formControlName="note" class="w-full"></textarea>
+            </div>
+        </div>
+    </div>
+</form>

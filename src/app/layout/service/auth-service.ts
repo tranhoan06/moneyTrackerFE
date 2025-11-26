@@ -31,5 +31,16 @@ export class AuthenService {
     return this.http.post<void>(url, {});
   }
 
+  // get info user
+  getUserByEmail(email: string): Observable<any> {
+    const url = `${this.apiUrl}/api/user/getByEmail`;
+    return this.http.get<any>(url, { params: { email } });
+  }
+
+  // refresh token
+  refreshToken(refreshToken: string): Observable<any> {
+    const url = `${this.apiUrl}/auth/refresh`;
+    return this.http.post<any>(url, { refreshToken });
+  }
 
 }

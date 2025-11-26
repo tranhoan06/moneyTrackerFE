@@ -1,9 +1,11 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, finalize, throwError } from 'rxjs';
+import { catchError, finalize, throwError, switchMap } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 import { LoadingService } from '../services/loading.service';
+import { TokenRefreshService } from '../services/token-refresh.service';
+import { AuthService } from '../services/auth.service';
 
 /**
  * HTTP Interceptor để xử lý tất cả các API calls
@@ -15,6 +17,8 @@ import { LoadingService } from '../services/loading.service';
 export const httpInterceptor: HttpInterceptorFn = (req, next) => {
     const router = inject(Router);
     const loadingService = inject(LoadingService);
+    const tokenRefreshService = inject(TokenRefreshService);
+    const authService = inject(AuthService);
 
     // Kiểm tra môi trường
     const isDevelopment = window.location.hostname === 'localhost' || 
@@ -23,14 +27,8 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
 
     // Lấy baseUrl từ config (có thể override từ localStorage)
     let baseUrl = API_CONFIG.baseUrl;
-    if (API_CONFIG.allowOverride) {
-        const overrideUrl = localStorage.getItem('api_base_url');
-        if (overrideUrl) {
-            baseUrl = overrideUrl;
-        }
-    }
     
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token'); // Lấy token từ storage
+    const token = sessionStorage.getItem('token'); // Lấy token từ storage
 
     // Kiểm tra xem URL có phải là external URL hoặc assets không
     const isExternalUrl = req.url.startsWith('http://') || req.url.startsWith('https://');
@@ -65,18 +63,6 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
         url: finalUrl,
         setHeaders: headers
     });
-
-    // Log request (chỉ trong development và không phải assets)
-    if (!isAsset && isDevMode()) {
-        const env = isDevelopment ? '🔵 DEV (localhost)' : '🟢 PROD (server)';
-        console.log(`🚀 API Request [${env}]:`, {
-            method: clonedRequest.method,
-            url: clonedRequest.url,
-            baseUrl: shouldAddBaseUrl ? baseUrl : 'none (external/asset)',
-            headers: Object.keys(headers)
-        });
-    }
-
     // Xử lý response
     return next(clonedRequest).pipe(
         finalize(() => {
@@ -86,48 +72,50 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
             }
         }),
         catchError((error: HttpErrorResponse) => {
-            // Log error (chỉ cho API calls, không phải assets)
-            if (!isAsset) {
-                console.error('❌ API Error:', {
-                    status: error.status,
-                    statusText: error.statusText,
-                    url: error.url,
-                    message: error.message,
-                    error: error.error
-                });
-            }
 
             // Xử lý các loại lỗi khác nhau
             if (error instanceof HttpErrorResponse) {
                 switch (error.status) {
                     case 401:
-                        // Unauthorized - xóa token và redirect về login
-                        localStorage.removeItem('token');
-                        sessionStorage.removeItem('token');
-                        router.navigate(['/login']);
+                        const isRefreshRequest = req.url.includes('/auth/refresh');
+                        
+                        if (!isRefreshRequest && authService.isTokenExpired() && authService.getRefreshToken()) {
+                            return tokenRefreshService.refreshAccessToken().pipe(
+                                switchMap((newToken) => {
+                                    const newHeaders = { ...headers };
+                                    newHeaders['Authorization'] = `Bearer ${newToken}`;
+                                    
+                                    const retryRequest = req.clone({
+                                        url: finalUrl,
+                                        setHeaders: newHeaders
+                                    });
+                                    return next(retryRequest);
+                                }),
+                                catchError((refreshError) => {
+                                    authService.removeToken();
+                                    router.navigate(['/login']);
+                                    return throwError(() => refreshError);
+                                })
+                            );
+                        } else {
+                            authService.removeToken();
+                            router.navigate(['/login']);
+                        }
                         break;
 
                     case 403:
-                        // Forbidden
-                        console.error('Access forbidden');
                         break;
 
                     case 404:
-                        // Not found
-                        console.error('Resource not found');
                         break;
 
                     case 500:
                     case 502:
                     case 503:
-                        // Server errors
-                        console.error('Server error:', error.status);
                         break;
 
                     default:
-                        if (error.status) {
-                            console.error(`HTTP Error ${error.status}:`, error.statusText);
-                        }
+                        if (error.status) {}
                 }
             }
 

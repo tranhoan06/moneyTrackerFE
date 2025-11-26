@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,12 +7,14 @@ import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { CheckboxModule } from 'primeng/checkbox';
-import { HttpClient } from '@angular/common/http';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthService } from '@/core/services/auth.service';
 import { AuthenService } from '@/layout/service/auth-service';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { Store } from '@ngrx/store';
+import * as AppActions from '../../../core/store/app.action';
+import { Subject, take } from 'rxjs';
 
 @Component({
   selector: 'app-login-component',
@@ -22,13 +24,13 @@ import { ToastModule } from 'primeng/toast';
   templateUrl: './login-component.html',
   styleUrl: './login-component.scss'
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
+  private store = inject(Store);
+  private destroy$ = new Subject<void>();
   loginForm!: FormGroup;
   isLoading: boolean = false;
   returnUrl: string = '/';
-
   constructor(
-    private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
@@ -70,12 +72,16 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Lấy returnUrl từ query params
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+
   onLogin() {
-    // Mark all fields as touched để hiển thị lỗi
     if (this.loginForm.invalid) {
       Object.keys(this.loginForm.controls).forEach(key => {
         this.loginForm.get(key)?.markAsTouched();
@@ -89,11 +95,11 @@ export class LoginComponent implements OnInit {
     this.authService2.login({ email: formValue.email, password: formValue.password }).subscribe({
       next: (response: any) => {
         this.isLoading = false;
-        
+
         // Lấy token từ response.data.accessToken
         const accessToken = response?.data?.accessToken;
         const refreshToken = response?.data?.refreshToken;
-        
+
         if (accessToken) {
           let expiresIn: number | undefined;
           try {
@@ -104,22 +110,23 @@ export class LoginComponent implements OnInit {
           } catch (error) {
             console.warn('Could not decode token for expiry:', error);
           }
-          
+
           // Lưu accessToken
           this.authService.setToken(accessToken, formValue.rememberMe, expiresIn);
-          
+
           // Lưu refreshToken nếu có
           if (refreshToken) {
             this.authService.setRefreshToken(refreshToken, formValue.rememberMe);
           }
         }
-        
+
         this.messageService.add({
           severity: 'success',
           summary: 'Thành công',
           detail: response?.message || 'Đăng nhập thành công!'
         });
         // Redirect về trang đã yêu cầu sau 1.5 giây
+        this.getUserByEmail(formValue.email);
         setTimeout(() => {
           this.router.navigate([this.returnUrl]);
         }, 1500);
@@ -133,5 +140,21 @@ export class LoginComponent implements OnInit {
         });
       }
     });
+  }
+
+  getUserByEmail(email: string) {
+    this.authService2.getUserByEmail(email).subscribe({
+      next: (response: any) => {
+        if (response?.data) {
+          // Dispatch vào store
+          this.store.dispatch(AppActions.setUserInfo({
+            userInfo: response.data
+          }));
+        }
+      },
+      error: (error: any) => {
+        console.error('Error getting user info:', error);
+      }
+    })
   }
 }

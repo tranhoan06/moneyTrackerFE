@@ -1,4 +1,6 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { clearState } from '../store/app.action';
 
 /**
  * Auth Service
@@ -11,30 +13,24 @@ export class AuthService {
     private readonly TOKEN_KEY = 'token';
     private readonly TOKEN_EXPIRY_KEY = 'token_expiry';
     private readonly REFRESH_TOKEN_KEY = 'refresh_token';
+    private store = inject(Store);
 
     /**
      * Lấy token từ storage
      */
     getToken(): string | null {
-        return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+        return sessionStorage.getItem(this.TOKEN_KEY);
     }
 
     /**
      * Lưu token vào storage
      */
     setToken(token: string, rememberMe: boolean = false, expiresIn?: number): void {
-        if (rememberMe) {
-            localStorage.setItem(this.TOKEN_KEY, token);
-            if (expiresIn) {
-                const expiryTime = Date.now() + (expiresIn * 1000);
-                localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-            }
-        } else {
-            sessionStorage.setItem(this.TOKEN_KEY, token);
-            if (expiresIn) {
-                const expiryTime = Date.now() + (expiresIn * 1000);
-                sessionStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-            }
+
+        sessionStorage.setItem(this.TOKEN_KEY, token);
+        if (expiresIn) {
+            const expiryTime = Date.now() + (expiresIn * 1000);
+            sessionStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
         }
     }
 
@@ -42,18 +38,14 @@ export class AuthService {
      * Lưu refresh token vào storage
      */
     setRefreshToken(refreshToken: string, rememberMe: boolean = false): void {
-        if (rememberMe) {
-            localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-        } else {
-            sessionStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-        }
+        sessionStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
     }
 
     /**
      * Lấy refresh token từ storage
      */
     getRefreshToken(): string | null {
-        return localStorage.getItem(this.REFRESH_TOKEN_KEY) || sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
+        return sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
     }
 
     /**
@@ -66,6 +58,7 @@ export class AuthService {
         sessionStorage.removeItem(this.TOKEN_KEY);
         sessionStorage.removeItem(this.TOKEN_EXPIRY_KEY);
         sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+        this.store.dispatch(clearState());
     }
 
     /**
@@ -85,9 +78,8 @@ export class AuthService {
         }
 
         // Kiểm tra expiry time từ storage
-        const expiryTime = localStorage.getItem(this.TOKEN_EXPIRY_KEY) || 
-                          sessionStorage.getItem(this.TOKEN_EXPIRY_KEY);
-        
+        const expiryTime = sessionStorage.getItem(this.TOKEN_EXPIRY_KEY);
+
         if (expiryTime) {
             const expiry = parseInt(expiryTime, 10);
             if (Date.now() >= expiry) {
