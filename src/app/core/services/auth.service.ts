@@ -52,9 +52,6 @@ export class AuthService {
      * Xóa token khỏi storage
      */
     removeToken(): void {
-        localStorage.removeItem(this.TOKEN_KEY);
-        localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
-        localStorage.removeItem(this.REFRESH_TOKEN_KEY);
         sessionStorage.removeItem(this.TOKEN_KEY);
         sessionStorage.removeItem(this.TOKEN_EXPIRY_KEY);
         sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);

@@ -7,45 +7,30 @@ import { LoadingService } from '../services/loading.service';
 import { TokenRefreshService } from '../services/token-refresh.service';
 import { AuthService } from '../services/auth.service';
 
-/**
- * HTTP Interceptor để xử lý tất cả các API calls
- * - Thêm base URL (nếu cần)
- * - Thêm headers (Authorization, Content-Type)
- * - Xử lý errors
- * - Logging requests/responses
- */
+
 export const httpInterceptor: HttpInterceptorFn = (req, next) => {
     const router = inject(Router);
     const loadingService = inject(LoadingService);
     const tokenRefreshService = inject(TokenRefreshService);
     const authService = inject(AuthService);
 
-    // Kiểm tra môi trường
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                          window.location.hostname === '127.0.0.1' ||
-                          window.location.hostname.includes('localhost');
 
-    // Lấy baseUrl từ config (có thể override từ localStorage)
     let baseUrl = API_CONFIG.baseUrl;
     
-    const token = sessionStorage.getItem('token'); // Lấy token từ storage
+    const token = sessionStorage.getItem('token');
 
-    // Kiểm tra xem URL có phải là external URL hoặc assets không
     const isExternalUrl = req.url.startsWith('http://') || req.url.startsWith('https://');
     const isAsset = req.url.startsWith('assets/') || req.url.startsWith('/assets/');
     const shouldAddBaseUrl = API_CONFIG.autoAddBaseUrl && !isExternalUrl && !isAsset && baseUrl;
 
-    // Hiển thị loading spinner cho API calls (không phải assets)
     if (!isAsset) {
         loadingService.show();
     }
 
-    // Xây dựng URL cuối cùng
     const finalUrl = shouldAddBaseUrl 
         ? `${baseUrl}${req.url.startsWith('/') ? req.url : '/' + req.url}`
         : req.url;
 
-    // Chuẩn bị headers
     const headers: { [key: string]: string } = {};
 
     // Chỉ thêm Content-Type cho các request không phải FormData

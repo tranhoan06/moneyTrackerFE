@@ -20,7 +20,7 @@ export class DataEntryComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   dataForm!: FormGroup;
 
-  optionList!: OptionListModel
+  optionList!: OptionListModel[];
 
   constructor(
     private fb: FormBuilder,
@@ -63,6 +63,7 @@ export class DataEntryComponent implements OnInit, OnDestroy {
     this.optionListService.getOptionList(userId).subscribe({
       next: (response: any) => {
         this.optionList = response.data;
+        this.store.dispatch(AppActions.setOptionList({ optionList: this.optionList }));
       },
       error: (error: any) => {
         console.error('Error fetching option list:', error);

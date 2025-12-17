@@ -5,10 +5,6 @@ import { HttpClient } from '@angular/common/http';
 import { API_CONFIG } from '../config/api.config';
 import { AuthService } from './auth.service';
 
-/**
- * Token Refresh Service
- * Quản lý việc refresh token và tránh multiple concurrent refresh requests
- */
 @Injectable({
     providedIn: 'root'
 })
@@ -21,9 +17,8 @@ export class TokenRefreshService {
         private http: HttpClient,
         private authService: AuthService
     ) {}
-    
+
     refreshAccessToken(): Observable<string> {
-        // Nếu đang refresh, trả về token mới khi có
         if (this.refreshTokenInProgress$.value) {
             return this.refreshTokenSubject$.pipe(
                 switchMap((token) => {
@@ -40,7 +35,6 @@ export class TokenRefreshService {
             return throwError(() => new Error('No refresh token available'));
         }
 
-        // Đánh dấu đang refresh
         this.refreshTokenInProgress$.next(true);
         this.refreshTokenSubject$.next(null);
 
@@ -51,7 +45,6 @@ export class TokenRefreshService {
                 const newRefreshToken = response?.data?.refreshToken || response?.refreshToken;
 
                 if (newAccessToken) {
-                    // Lưu token mới
                     let expiresIn: number | undefined;
                     try {
                         const payload = this.decodeJwtToken(newAccessToken);
@@ -61,16 +54,13 @@ export class TokenRefreshService {
                     } catch (error) {
                     }
 
-                    // Xác định rememberMe từ refreshToken storage (vì token có thể đã hết hạn)
-                    const rememberMe = !!localStorage.getItem('refresh_token');
+                    const rememberMe = !!sessionStorage.getItem('refresh_token');
                     this.authService.setToken(newAccessToken, rememberMe, expiresIn);
 
-                    // Lưu refresh token mới nếu có
                     if (newRefreshToken) {
                         this.authService.setRefreshToken(newRefreshToken, rememberMe);
                     }
 
-                    // Thông báo token mới đã sẵn sàng
                     this.refreshTokenSubject$.next(newAccessToken);
                 } else {
                     throw new Error('No access token in refresh response');
@@ -84,14 +74,12 @@ export class TokenRefreshService {
                 return throwError(() => new Error('No access token in refresh response'));
             }),
             catchError((error) => {
-                // Nếu refresh thất bại, xóa tất cả tokens
                 this.authService.removeToken();
                 this.refreshTokenInProgress$.next(false);
                 this.refreshTokenSubject$.next(null);
                 return throwError(() => error);
             }),
             tap(() => {
-                // Hoàn thành refresh
                 this.refreshTokenInProgress$.next(false);
             })
         );

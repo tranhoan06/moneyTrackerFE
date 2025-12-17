@@ -5,6 +5,11 @@ export const setUserInfo = createAction(
     props<{ userInfo: any }>()
 );
 
+export const setOptionList = createAction(
+    '[App] Set Option List',
+    props<{ optionList: any }>()
+);
+
 export const clearState = createAction(
     '[App] Clear State'
 );

@@ -3,12 +3,31 @@
         <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
                 <label class="text-surface-900 dark:text-surface-0 font-medium">Ngày:</label>
-                <p-datepicker formControlName="date" [style]="{'width': '250px'}"></p-datepicker>
+                <p-datepicker formControlName="date" class="w-full"></p-datepicker>
             </div>
 
             <div class="flex flex-col gap-2">
                 <label class="text-surface-900 dark:text-surface-0 font-medium">Ghi chú:</label>
                 <textarea rows="5" cols="30" pTextarea formControlName="note" class="w-full"></textarea>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+            @for (option of optionList; track option.nameOption) {
+            <div class="flex flex-col gap-2">
+                <div class="option-card">
+                    <i [class]="'fas fa-' + option.icon" [style]="{'color': option.color}"></i>
+                    <label for="" class="text-center mt-3" style="cursor: pointer">{{option.nameOption}}</label>
+                </div>
+            </div>
+            }
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+            <div class="flex flex-col gap-2">
+                <div class="option-card">
+                    <i [class]="'fas fa-' + 'fa-thin fa-pen-to-square'"></i>
+                    <label for="" class="text-center mt-3" style="cursor: pointer">Chỉnh sửa</label>
+                </div>
             </div>
         </div>
     </div>
