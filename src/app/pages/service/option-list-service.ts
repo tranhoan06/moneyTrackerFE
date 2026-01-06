@@ -14,8 +14,8 @@ export class OptionListService {
   ) { }
 
   // getOptionList
-  getOptionList(userId: string): Observable<any> {
-    const url = `${this.apiUrl}/api/option/user/${userId}`;
-    return this.http.get<any>(url, { params: { userId } });
+  getOptionList(userId: string, type: string): Observable<any> {
+    const url = `${this.apiUrl}/api/option/user`;
+    return this.http.get<any>(url, { params: { userId, type } });
   }
 }
