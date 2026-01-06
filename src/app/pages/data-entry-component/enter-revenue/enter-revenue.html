@@ -23,8 +23,7 @@
                     class="option-card"
                     (click)="selectOption(option)"
                     [ngClass]="{
-    'border-orange-500 bg-orange-50 shadow-md': selectedOption == option
-  }"
+    'border-orange-500 bg-orange-50 shadow-md': selectedOption == option}"
                 >
                     <i [class]="'fas fa-' + option.icon" [style]="{'color': option.color}"></i>
                     <label for="" class="text-center mt-3" style="cursor: pointer">{{option.nameOption}}</label>
