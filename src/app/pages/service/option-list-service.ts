@@ -18,4 +18,12 @@ export class OptionListService {
     const url = `${this.apiUrl}/api/option/user`;
     return this.http.get<any>(url, { params: { userId, type } });
   }
+
+  saveExpenseTransaction(data: any): Observable<string> {
+    const url = `${this.apiUrl}/api/option/save-expense-transaction`;
+    return this.http.post(url, data, {
+      responseType: 'text'
+    });
+  }
+
 }

@@ -35,7 +35,11 @@ export class AppMenu {
                         icon: 'pi pi-pencil',
                         routerLink: ['/pages/data-entry']
                     },
-                    
+                    {
+                        label: 'Lịch',
+                        icon: 'pi pi-calendar',
+                        routerLink: ['/pages/calendar']
+                    },
                 ]
             },
         ];

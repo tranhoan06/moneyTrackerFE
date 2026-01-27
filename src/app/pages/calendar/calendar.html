@@ -1,0 +1,11 @@
+<div class="demo-app">
+    @if (calendarVisible()) {
+    <div class="demo-app-main">
+        <full-calendar [options]="calendarOptions"></full-calendar>
+    </div>
+    }
+</div>
+
+<div *ngIf="loading" class="spinner-backdrop"></div>
+
+<p-progressSpinner *ngIf="loading" class="center-spinner" strokeWidth="4"> </p-progressSpinner>

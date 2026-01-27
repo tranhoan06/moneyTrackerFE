@@ -1,11 +1,11 @@
-import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
 import { Store } from '@ngrx/store';
 import * as AppActions from '../../../core/store/app.action';
 import * as AppSelectors from '../../../core/store/app.selectors';
-import { filter, Subject, take, takeUntil } from 'rxjs';
+import { filter, finalize, Subject, take, takeUntil } from 'rxjs';
 import { OptionListService } from '../../service/option-list-service';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
@@ -13,12 +13,13 @@ import { CommonModule } from '@angular/common';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { OptionListModel } from '@/pages/model/commonModel.model';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-enter-expenses',
   standalone: true,
   imports: [DatePickerModule, TextareaModule, ReactiveFormsModule, InputNumberModule, ButtonModule, CommonModule,
-    ConfirmDialogModule
+    ConfirmDialogModule, ProgressSpinnerModule
   ],
   providers: [ConfirmationService],
   templateUrl: './enter-expenses.html',
@@ -32,10 +33,14 @@ export class EnterExpenses implements OnInit, OnDestroy {
 
   optionList!: OptionListModel[];
   selectedOption: any = null;
+  userId: string = '';
+  loading: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private optionListService: OptionListService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -50,7 +55,8 @@ export class EnterExpenses implements OnInit, OnDestroy {
         .subscribe(userInfo => {
           console.log('User Info after dispatch:', userInfo);
           if (userInfo?.id) {
-            this.getOptionList(userInfo.id);
+            this.userId = userInfo.id;
+            this.getOptionList(this.userId);
           }
         });
     }
@@ -119,8 +125,44 @@ export class EnterExpenses implements OnInit, OnDestroy {
 
   submitForm() {
     const payload = this.dataForm.value;
-    payload.type == 1;
+    payload.userId = this.userId;
+    payload.money_unit = 'VND';
+    payload.optionSelected = this.selectedOption;
 
+    payload.date = payload.date.toLocaleDateString('en-CA');
+    payload.type = 1;
+    this.saveExpenseTransaction(payload);
+  }
+
+  saveExpenseTransaction(payload: any) {
+    this.loading = true;
+
+    this.optionListService.saveExpenseTransaction(payload)
+      .pipe(finalize(() => {
+        setTimeout(() => {
+          this.loading = false;
+        }, 1000);
+      }))
+      .subscribe({
+        next: () => {
+          this.clearForm();
+        },
+        error: (error) => {
+          console.error(error);
+        }
+      });
+  }
+
+  clearForm() {
+    this.dataForm.reset({
+      date: null,
+      note: '',
+      amount: 0
+    });
+    this.dataForm.markAsPristine();
+    this.dataForm.markAsUntouched();
+    this.selectedOption = this.optionList[0];
+    this.cdr.detectChanges();
   }
 
 }
